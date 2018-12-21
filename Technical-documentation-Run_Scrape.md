@@ -1,3 +1,5 @@
+# Technical documentation for use of Python module Run_Scrape
+
 This document is a documentation file for the Python module **Run_Scrape.py**. This module runs in Python 3.4 or above. ***Note:** this process needs a Mozilla Firefox browser and a geckodriver executable. For more information check the document Scrape.doc.*
 
 The **Run_Scrape.py** module is comprised by a set of rules, which run, edit, and save scraped data from the job board at the http://www.jobportal.com domain. The main work is done by the **Scrape.py** module.
