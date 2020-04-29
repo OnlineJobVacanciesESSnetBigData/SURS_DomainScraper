@@ -1,0 +1,215 @@
+#!/usr/bin/env bash
+# -*- coding: utf-8 -*-
+import csv  # delo s csv datotekami
+import xlrd  # odpiranje Excel datotek
+import xlwt  # pisanje v Excel datoteke
+import sys  # ukazi sistemu (za vnašanje spremenljivk preko ukazne vrstice)
+import os  # ukazi sistemu (za brisanje datotek)
+from selenium.webdriver.firefox.webelement import FirefoxWebElement  # Delo na elementih v brskalnikih Firefox
+from selenium.webdriver.remote.webelement import WebElement  # Delo na elementih v drugih brskalnikih
+from datetime import datetime, timedelta
+from time import sleep
+from platform import system
+from selenium.common.exceptions import StaleElementReferenceException
+
+# Win10 fix za printanje v neklasičen stdout (recimo logfile)
+import win_unicode_console
+win_unicode_console.enable()
+
+
+def check_previous_links(domain_name, archive_dir, other_chs=None):
+    archive_dir = os_adapt(archive_dir)
+    previous_files = [file for file in os.listdir(archive_dir) if
+                      domain_name.lower() in file.lower() and file.endswith("csv") and not file.startswith("JSON")]
+    other_chs = [] if other_chs is None else other_chs
+    if isinstance(other_chs, str):
+        other_chs = [other_chs]
+    if other_chs:
+        previous_files = [file for file in previous_files if all(map(lambda x: x.lower() in file.lower(), other_chs))]
+    previous_links = []
+    for file in previous_files:
+        with open(os.path.join(archive_dir, file), "r", encoding="utf8") as article_links:
+            reader = csv.reader(article_links, delimiter=";")
+            articles = [row[0] for row in reader][1:]
+        previous_links.extend(articles)
+    return previous_links
+
+
+def os_adapt(save_dir):
+    if not save_dir:
+        return save_dir
+    if system() == "Linux" and not save_dir.startswith("/"):
+        if save_dir == r"F:\Python\Python35\FirefoxDriver\Firefox\firefox.exe":
+            save_dir = "/usr/bin/firefox"
+        elif save_dir == r"C:\Users\grahonja\AppData\Local\Google\Chrome\Application\chrome.exe":
+            save_dir = "/usr/bin/google-chrome"
+        else:
+            save_dir = "/home/STATISTIKA/grahonja/WinFolders/" + \
+                       save_dir.replace(":", "").replace("\\", "/").replace(".exe", "")
+    if system() == "Windows" and save_dir.startswith("/"):
+        if save_dir == "/usr/bin/firefox":
+            save_dir = r"F:\Python\Python35\FirefoxDriver\Firefox\firefox.exe"
+        elif save_dir == "/usr/bin/google-chrome":
+            save_dir = r"C:\Users\grahonja\AppData\Local\Google\Chrome\Application\chrome.exe"
+        else:
+            try:
+                save_dir = save_dir[save_dir.index("WinFolders") + 11:].replace("/", "\\")
+            except ValueError:
+                raise SystemError("File only exists on Linux system.")
+            save_dir = save_dir[0] + ":" + save_dir[1:]
+        if "." not in save_dir[-5:]:
+            save_dir += ".exe"
+    return save_dir
+
+
+def schedule_scraping(module, dateandtime=""):
+    if dateandtime == "":
+        dateandtime = datetime.fromtimestamp(datetime.now().timestamp() - 60).strftime("%d.%m.%Y/%H:%M")
+    elif datetime.strptime(dateandtime, "%d.%m.%Y/%H:%M") < datetime.now():
+        raise ValueError("Second argument must be a time in the future...")
+    if "." not in module:
+        print("\n\nParameter module is incomplete!!")
+        return
+    sys.path.insert(0, module[:module.index(".")])
+    module = __import__(module[module.index(".") + 1:])
+    print(module)
+    k = 0
+    while datetime.strptime(dateandtime, "%d.%m.%Y/%H:%M") > datetime.now():
+        print("\rNow waiting for time %s %s" % (dateandtime, "." * (k % 4) + " " * (3 - k % 4)), end="")
+        sys.stdout.flush()
+        sleep(1)
+        k += 1
+    print("")
+    module.main()
+
+
+def send_buttons(driver_, xpath, keys=None, pos=0):
+    if isinstance(xpath, (FirefoxWebElement, WebElement)):
+        el = xpath
+    else:
+        try:
+            el = driver_.driver.find_elements_by_xpath(xpath)[pos]
+        except StaleElementReferenceException:
+            sleep(0.1)
+            el = driver_.driver.find_elements_by_xpath(xpath)[pos]
+    if keys is None:
+        driver_.driver.execute_script("arguments[0].click();", el)
+    else:
+        if isinstance(keys, str):
+            sleep(0.5)
+            el.send_keys(keys[0])
+            k = 1
+            while k < len(keys):
+                try:
+                    el = driver_.driver.find_elements_by_xpath(xpath)[pos]
+                    el.send_keys(keys[k])
+                except StaleElementReferenceException:
+                    sleep(0.1)
+                    el = driver_.driver.find_elements_by_xpath(xpath)[pos]
+                    el.send_keys(keys[k])
+                sleep(0.05)
+                k += 1
+        else:
+            el.send_keys(keys)
+
+
+def numbers_report(lst, save_dir, date_format="%d.%m.%Y"):
+    save_dir = os_adapt(save_dir)
+    # Save number of recorded articles
+    comma = True
+    try:
+        with open(save_dir, "r+") as report:
+            rep = report.readlines()
+    except FileNotFoundError:
+        rep = ["\n", ""]
+        comma = False
+    rep[0] = rep[0].replace("\n", "," * comma + datetime.now().strftime(date_format) + "\n")
+    rep[1] += "," * comma + "%d" % len(lst)
+    with open(save_dir, "w+") as report:
+        report.writelines(rep)
+
+
+def flights_report(lst, save_dir, cabinclass="Classic"):
+    import warnings
+    with warnings.catch_warnings():
+        warnings.filterwarnings(
+            "ignore", message="numpy.dtype size changed, may indicate binary incompatibility. Expected 56, got 52"
+        )
+        import pandas
+
+    save_dir = os_adapt(save_dir)
+    # Save number of recorded flights, aggregated in intervals [00:14] and
+    lst = pandas.DataFrame(lst[1:], columns=lst[0])
+    lst = lst[(lst.razred_od == lst.razred_vr) & (lst.razred_od == cabinclass)]
+    lst["popoldan1"] = lst["cas_od"].apply(pandas.to_datetime).between("00:00", "13:59")
+    lst["popoldan2"] = lst["cas_vr.od"].apply(pandas.to_datetime).between("00:00", "13:59")
+    date_of_scraping = lst.iloc[1][lst.columns.tolist().index("RESPONSE_DATE")]
+    deps_set = lst.drop_duplicates(subset=["odhod", "vrnitev", "datum_od_dejanski",
+                                           "razred_od", "cas_od", "cas_pri"])
+    arrs_set = lst.drop_duplicates(subset=["odhod", "vrnitev", "datum_vr.od_dejanski",
+                                           "razred_od", "cas_vr.od", "cas_vr.pri"])
+    res = []
+    months_of_scraping = lst.datum_od.drop_duplicates().tolist()
+    for _ in range(datetime.strptime(months_of_scraping[0], "%d.%m.%Y").month -
+                   datetime.strptime(date_of_scraping, "%d.%m.%Y").month):
+        res.append([])
+    for months in months_of_scraping:
+        jutranj1 = len(deps_set[(deps_set.popoldan1 is True) & (deps_set.datum_od == months)])
+        popoldanski1 = len(deps_set[(deps_set.popoldan1 is False) & (deps_set.datum_od == months)])
+        jutranji2 = len(arrs_set[(arrs_set.popoldan1 is True) & (arrs_set.datum_od == months)])
+        popoldanski2 = len(arrs_set[(arrs_set.popoldan1 is False) & (arrs_set.datum_od == months)])
+        res.append([date_of_scraping,
+                    jutranj1, popoldanski1, jutranj1 + popoldanski1,
+                    jutranji2, popoldanski2, jutranji2 + popoldanski2,
+                    jutranj1 + popoldanski1 + jutranji2 + popoldanski2])
+    previous_data = []
+    try:
+        workbook = xlrd.open_workbook(save_dir)
+    except FileNotFoundError:
+        workbook = xlwt.Workbook()
+    else:
+        for sheet in workbook.sheets():
+            previous_data.append([[sheet.cell_value(i, j) for j in range(sheet.ncols)] for i in range(sheet.nrows)])
+        workbook.release_resources()
+        workbook = xlwt.Workbook()
+    previous_data += [[["datum_strganja", "jutranji1", "popoldanski1", "SUM1",
+                        "jutranji2", "popoldanski2", "SUM2", "SUM",
+                        "Djutranji1", "Dpopoldanski1", "DSUM1",
+                        "Djutranji2", "Dpopoldanski2", "DSUM2", "DSUM"]]
+                      for _ in range(len(res) - len(previous_data))]
+
+    for month in range(len(previous_data)):
+        if res[month] and len(previous_data[month]) > 1:
+            for n in range(1, 8):
+                res[month].append(100 * res[month][n]/previous_data[month][-1][n])
+        previous_data[month].append(res[month])
+    for el in range(len(previous_data)):
+        sheet = workbook.add_sheet("T+%d" % el)
+        for i in range(len(previous_data[el])):
+            for j in range(len(previous_data[el][i])):
+                sheet.write(i, j, previous_data[el][i][j])
+    workbook.save(save_dir)
+
+
+def next_monday(date):
+    date += timedelta(days=(1 if not date.weekday() else 0))
+    return date + timedelta(days=(-date.weekday() + 7) % 7)
+
+
+def load_holiday_destinations(domain=None,
+                              wb=r"Q:\WS_CENE_PROJEKT\Navodila programerjem\Počitnice\Poctnice tujina_ZIMSKE2019.xlsx"):
+    wb = os_adapt(wb)
+    workbook = xlrd.open_workbook(wb)
+    sheet = workbook.sheet_by_name("KRAJI")
+    header = [sheet.cell_value(0, j) for j in range(sheet.ncols)]
+    workbook.release_resources()
+    if domain is None or domain.lower() == "any":
+        destinations = [sheet.cell_value(i, header.index("CILJ")) for i in range(1, sheet.nrows)]
+    else:
+        destinations = [sheet.cell_value(i, header.index("CILJ")) for i in range(sheet.nrows)
+                        if sheet.cell_value(i, header.index("AGENCIJA")).lower() == domain.lower()]
+    return sorted(set([dest for dest in destinations if dest]))
+
+
+if __name__ == "__main__":
+    schedule_scraping(sys.argv[1], sys.argv[2])
