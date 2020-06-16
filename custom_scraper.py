@@ -1,14 +1,13 @@
-from custom_driver import Driver  # custom object that creates a storage holder for connections and info to domains
-import scraping_aux  # custom module with additional tools for multi-thread scraping
-import traceback
-import csv  # module to work .csv files
-import time  # module to work with time objects
-from datetime import datetime  # module to work with datetime objects; including mathematical operations
-import os  # module with tools for working with files and folders
-import sys  # module with additional system tools
-from multiprocessing import Queue, Process, Manager  # module for multi-thread work
-from multiprocessing.queues import Empty  # multi-thread queue functionality
-from selenium.common.exceptions import WebDriverException  # module with WebDriver exception rules
+from custom_driver import Driver  # Custom object that creates a storage holder for connections and info to domains
+import traceback  # Working with error tracebacks
+import csv  # Module to work .csv files
+import time  # Module to work with time objects
+from datetime import datetime  # Module to work with datetime objects; including mathematical operations
+import os  # Module with tools for working with files and folders
+import sys  # Module with additional system tools
+from multiprocessing import Queue, Process, Manager  # Module for multi-thread work
+from multiprocessing.queues import Empty  # Multi-thread queue functionality
+from selenium.common.exceptions import WebDriverException  # Module with WebDriver exception rules
 
 # Win10 fix for printing into a custom stdout (e.g. logfile)
 import win_unicode_console
@@ -49,8 +48,8 @@ class Scraper(object):
         if num_of_threads < 1:
             raise ValueError("Number of threads must be positive!")
         self.num_of_threads = num_of_threads
-        self.to_save = scraping_aux.os_adapt(to_save)
-        self.to_log = scraping_aux.os_adapt(to_log) if driver is None or not driver.to_log else driver.to_log
+        self.to_save = to_save
+        self.to_log = to_log if driver is None or not driver.to_log else driver.to_log
         self.websites = [websites] if isinstance(websites, str) else (websites if isinstance(websites, list) else [])
         if not self.websites or not all([isinstance(page, str)for page in self.websites]):
             raise TypeError("Parameter \'websites\' is must be a list of strings")
