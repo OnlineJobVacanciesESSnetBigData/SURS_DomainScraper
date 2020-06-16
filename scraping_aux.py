@@ -1,24 +1,23 @@
 #!/usr/bin/env bash
 # -*- coding: utf-8 -*-
-import csv  # delo s csv datotekami
-import xlrd  # odpiranje Excel datotek
-import xlwt  # pisanje v Excel datoteke
-import sys  # ukazi sistemu (za vnašanje spremenljivk preko ukazne vrstice)
-import os  # ukazi sistemu (za brisanje datotek)
-from selenium.webdriver.firefox.webelement import FirefoxWebElement  # Delo na elementih v brskalnikih Firefox
-from selenium.webdriver.remote.webelement import WebElement  # Delo na elementih v drugih brskalnikih
-from datetime import datetime, timedelta
-from time import sleep
-from platform import system
-from selenium.common.exceptions import StaleElementReferenceException
+import csv  # .csv functionality
+import xlrd  # Excel files opening
+import xlwt  # Excel files writing
+import sys  # Module with additional system tools
+import os  # Module with tools for working with files and folders
+from selenium.webdriver.firefox.webelement import FirefoxWebElement  # Firefox browser elements functionality
+from selenium.webdriver.remote.webelement import WebElement  # Non-Firefox browser elements functionality
+from datetime import datetime, timedelta  # Date and time functionality and operations
+from time import sleep  # Pausing python
+from selenium.common.exceptions import StaleElementReferenceException  # Dealing with errors in changing pages
 
-# Win10 fix za printanje v neklasičen stdout (recimo logfile)
+# Win10 fix for printing into a custom stdout (e.g. logfile)
 import win_unicode_console
 win_unicode_console.enable()
 
 
 def check_previous_links(domain_name, archive_dir, other_chs=None):
-    archive_dir = os_adapt(archive_dir)
+    """Checks previously scraped files to avoid duplicated scraping; it is supposed these files are in .csv format"""
     previous_files = [file for file in os.listdir(archive_dir) if
                       domain_name.lower() in file.lower() and file.endswith("csv") and not file.startswith("JSON")]
     other_chs = [] if other_chs is None else other_chs
@@ -33,29 +32,6 @@ def check_previous_links(domain_name, archive_dir, other_chs=None):
             articles = [row[0] for row in reader][1:]
         previous_links.extend(articles)
     return previous_links
-
-
-def os_adapt(save_dir):
-    if not save_dir:
-        return save_dir
-    if system() == "Linux" and not save_dir.startswith("/"):
-        if save_dir == r"..\firefox.exe":  # Windows firefox path
-            save_dir = "../firefox"  # Linux firefox path
-        elif save_dir == r"..\chrome.exe":  # Windows firefox path
-            save_dir = "../google-chrome"  # Linux firefox path
-        else:
-            # change windows format to linux format
-            save_dir = ".." + save_dir.replace(":", "").replace("\\", "/").replace(".exe", "")
-    if system() == "Windows" and save_dir.startswith("/"):
-        if save_dir == "../firefox":  # Linux firefox path
-            save_dir = r"..\firefox.exe"  # Windows firefox path
-        elif save_dir == "../google-chrome":  # Linux firefox path
-            save_dir = r"..\chrome.exe"  # Windows firefox path
-        else:
-            raise SystemError("File only exists on Linux system.")
-        if "." not in save_dir[-5:]:
-            save_dir += ".exe"
-    return save_dir
 
 
 def schedule_scraping(module, dateandtime=""):
@@ -80,6 +56,7 @@ def schedule_scraping(module, dateandtime=""):
 
 
 def send_buttons(driver_, xpath, keys=None, pos=0):
+    """Button pressing in browser elements"""
     if isinstance(xpath, (FirefoxWebElement, WebElement)):
         el = xpath
     else:
@@ -110,8 +87,7 @@ def send_buttons(driver_, xpath, keys=None, pos=0):
 
 
 def numbers_report(lst, save_dir, date_format="%d.%m.%Y"):
-    save_dir = os_adapt(save_dir)
-    # Save number of recorded articles
+    """Save number of recorded articles"""
     comma = True
     try:
         with open(save_dir, "r+") as report:
@@ -125,9 +101,10 @@ def numbers_report(lst, save_dir, date_format="%d.%m.%Y"):
         report.writelines(rep)
 
 
-def next_monday(date):
-    date += timedelta(days=(1 if not date.weekday() else 0))
-    return date + timedelta(days=(-date.weekday() + 7) % 7)
+def next_monday(date, day=0):
+    """Returns the date of the following monday (or any other day) given a date"""
+    date += timedelta(days=(1 if date.weekday() == day else 0) - day)
+    return date + timedelta(days=(-date.weekday() + 7) % 7 + day)
 
 
 if __name__ == "__main__":
