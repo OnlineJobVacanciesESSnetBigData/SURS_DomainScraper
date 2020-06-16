@@ -216,7 +216,7 @@ class Scraper(object):
             except Exception as e:
                 driver.save_to_log("\tCLOSING DRIVER %s DUE TO ERROR: " % driver.name +
                                    type(e).__name__ + ("\n\t" + str(e) if str(e) else "") + traceback.format_exc())
-                if kwargs.get("__debugmode__") is None or kwargs.get("__debugmode__") is False:
+                if kwargs.get("__debugmode__") is None or not kwargs.get("__debugmode__"):
                     driver.driver.quit()
                 raise e
             for new_link in next_page:
@@ -295,7 +295,7 @@ class Scraper(object):
             except Exception as e:
                 driver.save_to_log("\tCLOSING DRIVER %s DUE TO ERROR: " % driver.name
                                    + type(e).__name__ + ("\n\t" + str(e) if str(e) else "") + traceback.format_exc())
-                if kwargs.get("__debugmode__") is None or kwargs.get("__debugmode__") is False:
+                if kwargs.get("__debugmode__") is None or not kwargs.get("__debugmode__"):
                     driver.driver.quit()
                 raise e
             for new_link in next_page:
