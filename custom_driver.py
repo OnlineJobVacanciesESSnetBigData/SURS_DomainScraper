@@ -77,13 +77,7 @@ class Driver(object):
         soup = self.soup
         timeout = 20 if timeout is None else timeout
         if self.driver is None or not self.is_alive():
-            if webdriver_log is None:
-                pass
-            elif not webdriver_log:
-                # Enter a desirable path for the logfile
-                webdriver_log = r"..\log_%s.log" % datetime.now().strftime("%d-%m-%Y_%H-%M")
-            else:
-                pass
+            webdriver_log = webdriver_log if webdriver_log else None
             options = Options()
             for option in self.options:
                 options.add_argument(option)
