@@ -12,8 +12,8 @@ also decreases the possibility to be recognized as a computer and thus be denied
 The downside to the simulation method is a rather slow manner, as loading of a page needs to be executed before scraping.
 
 The scraping is done through a three-tier application process:
- * the object _Driver_ (from the _custom_driver_ module) handles a browser simulation, connection to and interaction with a page; it also
- automatically executes the Robots.txt restriction check everytime the domain name is changed,
+ * the object _Driver_ (from the _custom_driver_ module) handles a browser simulation, connection to and interaction with a page; it
+ also automatically executes the Robots.txt restriction check everytime the domain name is changed,
  * a domain-specific application (a general example is represented in the _domain_tags.py_ file) must be written, which instructs the
  _Driver_ object what to do and what to return from the page once connected,
  * the object _Scraper_ (from the _custom_scraper_ module) manages multiple multithread processes of _Driver_ objects and collects the 
@@ -34,7 +34,7 @@ target pages and other keyword arguments (are described in detail in the relevan
 process, the robot will check the (first) target page's robots.txt and Robots.txt page for scraping restrictions. Users can also specify 
 Firefox profiles to run the _Scraper_ with and it will in turn use the same profile on the _Driver_ objects.
 
-Then the specified number (default: 3) of _Driver_ object robots will initialize on the target pages and collect the information 
+Then the specified number (default: 15) of _Driver_ object robots will initialize on the target pages and collect the information
 according to the _domain_tag_ instructions. If the number of target pages is higher than the number of _Driver_ objects, each object 
 will automatically continue its job on the next page after waiting for a appropriate amount of time (default: 3 seconds). While working 
 the robots will also log their work to a specified logfile or else to the output window.
