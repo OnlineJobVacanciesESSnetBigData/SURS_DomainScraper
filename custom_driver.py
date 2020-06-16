@@ -1,25 +1,25 @@
 #!/usr/bin/env bash
 # -*- coding: utf-8 -*-
-from bs4 import BeautifulSoup  # Iskanje po html-ju
-from selenium import webdriver  # Strganje spletnih strani s simulacijo brskalnika
-from selenium.webdriver.firefox.options import Options  # Nastavitve simulacije brskalnika
-from selenium.webdriver.firefox.firefox_binary import FirefoxBinary  # Zaganjanje Firefox brskalnika
-import sys  # Upravljanje z datotekami
-from datetime import datetime  # Delo z datumi in časom
-from urllib.parse import urlparse  # Delo z internetnimi naslovi
-from warnings import warn  # Upravljanje z opozorili
-import re
+from bs4 import BeautifulSoup  # HTML navigation
+from selenium import webdriver  # Browser simulated scraping
+from selenium.webdriver.firefox.options import Options  # Options for the Firefox browser simulation
+from selenium.webdriver.firefox.firefox_binary import FirefoxBinary  # Initialization for the browser
+import sys  # Folder and file manipulation
+from datetime import datetime  # Date and time manipulation
+from urllib.parse import urlparse  # Parsing internet addresses
+from warnings import warn  # Python warning mechanics
+import re  # Regular expressions
 
-from selenium.common.exceptions import TimeoutException  # Nastavitve ob prevelikem času povezovanja na strani
-from selenium.common.exceptions import WebDriverException  # Upravljanje z nedostopnimi stranmi
+from selenium.common.exceptions import TimeoutException  # Timeout exception handling
+from selenium.common.exceptions import WebDriverException  # Unconnected internet sites' errors handling
 
-# Naslednji moduli se uporabljajo za preverjanje stanja driver-jev
+# The following modules are used for browser simulation state monitoring
 import http.client
 import socket
 from urllib3.exceptions import MaxRetryError
 from selenium.webdriver.remote.command import Command
 
-# Win10 fix za printanje v neklasišen stdout (recimo logfile)
+# Win10 fix for custom stdout printing (e.g. a logfile)
 import win_unicode_console
 win_unicode_console.enable()
 
@@ -40,14 +40,16 @@ class Driver(object):
     __fresh__ = True
 
     def __init__(self, options=None, restrictions=None, to_log="", proxy_port=None, profile=None,
-                 executable_path=None, bins_path=None, name="cstmdr", n=15):
+                 executable_path=None, bins_path=None, name="cstmdr", n=15, user_agent_string=None):
         """Initiate a Driver class object. """
         self.name = name
         self.n = n
+        self.user_agent_string = "custombot" if user_agent_string is None \
+            else user_agent_string
         if executable_path is None:
-            executable_path = r"../geckodriver.exe"
+            executable_path = r"..\geckodriver.exe"  # Enter the path to the geckodriver executable
         if bins_path is None:
-            bins_path = r"../Firefox/firefox.exe"
+            bins_path = r"..\Firefox\firefox.exe"  # Enter the path to the Firefox browser executable
         if options is None:
             self.options = ["--headless"]
         else:
@@ -73,20 +75,26 @@ class Driver(object):
                 print("%s%s:\t%s" % ("\n"*nblank, datetime.now().strftime("%d.%m.%Y %H:%M:%S"), message), **kwargs)
                 sys.stdout = sys.__stdout__
 
-    def get(self, link=None, n=None, webdriver_log=None, timeout=None, th=""):
+    def get(self, link=None, n=None, webdriver_log="", timeout=None, th=""):
         """Connects to a internet link with a Firefox webdriver proxy browser.
          If such a proxy does not yet exist, it creates one"""
         self.__fresh__ = False
+        soup = self.soup
         timeout = 20 if timeout is None else timeout
         if self.driver is None or not self.is_alive():
-            if not webdriver_log:
-                webdriver_log = r"../logs/log_%s.log" % datetime.now().strftime("%d-%m-%Y_%H-%M")
+            if webdriver_log is None:
+                pass
+            elif not webdriver_log:
+                # Enter a desirable path for the logfile
+                webdriver_log = r"..\log_%s.log" % datetime.now().strftime("%d-%m-%Y_%H-%M")
+            else:
+                pass
             options = Options()
             for option in self.options:
                 options.add_argument(option)
             profile = webdriver.FirefoxProfile()
             if self.profile is None:
-                profile.set_preference("general.useragent.override", "custom_scraper")
+                profile.set_preference("general.useragent.override", self.user_agent_string)
             else:
                 for k, v in self.profile.items():
                     profile.set_preference(k, v)
@@ -117,9 +125,9 @@ class Driver(object):
         if urlparse(link).netloc != self.domain and self.__change_restrictions__:
             self.restrictions = None
         self.http, self.domain, self.path, self.params, self.query, self.fragment = urlparse(link)[:]
-        if link != "about:blank" and self.restrictions is None:
-            self.check_robots(n=2)
         self.current_url = link
+        if link != "about:blank" and self.restrictions is None:
+            self.check_robots(n=2, **{".call": True})
         if self.robots_deny(link=link):
             self.save_to_log("Driver %s: Robots deny access to this page (condition \'%s\')!"
                              % (self.name, self.robots_deny()))
@@ -150,7 +158,7 @@ class Driver(object):
                              % (link, self.n if n is None else n))
             self.driver.implicitly_wait(20)
             self.driver.execute_script("window.stop();")
-        if refresh or BeautifulSoup(self.driver.page_source, "lxml") != self.soup:
+        if refresh or BeautifulSoup(self.driver.page_source, "lxml") != soup:
             self.soup = BeautifulSoup(self.driver.page_source, "lxml")
             return True
         else:
@@ -184,7 +192,11 @@ class Driver(object):
 
     def check_robots(self, agent="*", **kwargs):
         """Checks robots on the domain."""
+        agents = [agent]
+        if agent != self.user_agent_string:
+            agents.append(self.user_agent_string)
         self.save_to_log("Checking robots on domain %s" % self.domain)
+        currurl = self.current_url
         self.__change_restrictions__ = True
         self.restrictions = []
         restrictions = []
@@ -200,18 +212,43 @@ class Driver(object):
         bs2 = self.soup
         if start_driver:
             self.driver.quit()
-        if "User-agent: %s" % agent in bs1.get_text().replace("User-Agent", "User-agent"):
-            cont = bs1.get_text().replace("User-Agent", "User-agent")
-        elif "User-agent: %s" % agent in bs2.get_text().replace("User-Agent", "User-agent"):
-            cont = bs2.get_text().replace("User-Agent", "User-agent")
-        else:
-            self.restrictions = restrictions
-            self.save_to_log("No restrictions found. Robots assumed from parent Driver!")
-            return
-        count2 = 0
-        for __ in range(cont.count("User-agent: %s" % agent) - 1):
-            count1 = cont.index("User-agent: %s" % agent, count2)
-            count2 = cont.index("User-agent: ", count1 + 1)
+        for _agent in agents:
+            if "User-agent: %s" % _agent in bs1.get_text().replace("User-Agent", "User-agent"):
+                cont = bs1.get_text().replace("User-Agent", "User-agent")
+            elif "User-agent: %s" % _agent in bs2.get_text().replace("User-Agent", "User-agent"):
+                cont = bs2.get_text().replace("User-Agent", "User-agent")
+            else:
+                self.restrictions = restrictions
+                self.save_to_log("No restrictions found for agent %s. Robots assumed from parent Driver!" % _agent)
+                if kwargs.get(".call") is None:
+                    self.get(currurl)
+                self.http, self.domain, self.path, self.params, self.query, self.fragment = urlparse(currurl)[:]
+                self.current_url = currurl
+                continue
+            count2 = 0
+            for __ in range(cont.count("User-agent: %s" % _agent) - 1):
+                count1 = cont.index("User-agent: %s" % _agent, count2)
+                count2 = cont.index("User-agent: ", count1 + 1)
+                if "Disallow: " in cont[count1:count2]:
+                    ccount2 = 0
+                    for _ in range(cont[count1:count2].count("Disallow: ") - 1):
+                        ccount1 = cont[count1:count2].index("Disallow: ", ccount2)
+                        ccount2 = min(cont[count1:count2].index("\n", ccount1 + 1),
+                                      cont[count1:count2].index("#", ccount1 + 1) if "#" in cont[
+                                                                                            count1 + ccount1 + 1:count2]
+                                      else 9999999999)
+                        restrictions.append(cont[(count1 + ccount1 + 10):(count1 + ccount2)])
+                    ccount1 = cont[count1:].index("Disallow: ", count1 + ccount2)
+                    restrictions.append(cont[(count1 + ccount1 + 10):(count1 + ccount1 + 10 +
+                                                                      min(cont[count1 + ccount1 + 10:].index("\n"),
+                                                                          cont[count1 + ccount1 + 10:count2].index("#")
+                                                                          if "#" in cont[count1 + ccount1 + 10:count2]
+                                                                          else 9999999999))])
+            count1 = cont.index("User-agent: %s" % _agent, count2)
+            try:
+                count2 = cont.index("User-agent: ", count1 + 1)
+            except ValueError:
+                count2 = len(cont)
             if "Disallow: " in cont[count1:count2]:
                 ccount2 = 0
                 for _ in range(cont[count1:count2].count("Disallow: ") - 1):
@@ -221,36 +258,21 @@ class Driver(object):
                                                                                         count1 + ccount1 + 1:count2]
                                   else 9999999999)
                     restrictions.append(cont[(count1 + ccount1 + 10):(count1 + ccount2)])
-                ccount1 = cont[count1:].index("Disallow: ", count1 + ccount2)
-                restrictions.append(cont[(count1 + ccount1 + 10):(count1 + ccount1 + 10 +
-                                                                  min(cont[count1 + ccount1 + 10:].index("\n"),
-                                                                      cont[count1 + ccount1 + 10:count2].index("#") if
-                                                                      "#" in cont[count1 + ccount1 + 10:count2] else
-                                                                      9999999999))])
-        count1 = cont.index("User-agent: %s" % agent, count2)
-        try:
-            count2 = cont.index("User-agent: ", count1 + 1)
-        except ValueError:
-            count2 = len(cont)
-        if "Disallow: " in cont[count1:count2]:
-            ccount2 = 0
-            for _ in range(cont[count1:count2].count("Disallow: ") - 1):
-                ccount1 = cont[count1:count2].index("Disallow: ", ccount2)
-                ccount2 = min(cont[count1:count2].index("\n", ccount1 + 1),
-                              cont[count1:count2].index("#", ccount1 + 1) if "#" in cont[count1 + ccount1 + 1:count2]
-                              else 9999999999)
-                restrictions.append(cont[(count1 + ccount1 + 10):(count1 + ccount2)])
-            ccount1 = cont[count1:].index("Disallow: ", ccount2)
-            try:
-                restrictions.append(cont[(count1 + ccount1 + 10):(count1 + ccount1 + 10 +
-                                                                  min(cont[count1 + ccount1 + 10:].index("\n"),
-                                                                      cont[count1 + ccount1 + 10:count2].index("#") if
-                                                                      "#" in cont[count1 + ccount1 + 10:count2] else
-                                                                      9999999999))])
-            except ValueError:
-                restrictions.append(cont[(count1 + ccount1 + 10):])
+                ccount1 = cont[count1:].index("Disallow: ", ccount2)
+                try:
+                    restrictions.append(cont[(count1 + ccount1 + 10):(count1 + ccount1 + 10 +
+                                                                      min(cont[count1 + ccount1 + 10:].index("\n"),
+                                                                          cont[count1 + ccount1 + 10:count2].index("#")
+                                                                          if "#" in cont[count1 + ccount1 + 10:count2]
+                                                                          else 9999999999))])
+                except ValueError:
+                    restrictions.append(cont[(count1 + ccount1 + 10):])
         self.restrictions = restrictions
         self.save_to_log("Robots checked! Restrictions: %s" % self.restrictions)
+        if kwargs.get(".call") is None:
+            self.get(currurl)
+        self.http, self.domain, self.path, self.params, self.query, self.fragment = urlparse(currurl)[:]
+        self.current_url = currurl
 
     def robots_deny(self, link=None):
         """Returns list of websites that are denied by robots.txt file."""
