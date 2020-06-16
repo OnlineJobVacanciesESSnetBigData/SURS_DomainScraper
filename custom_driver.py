@@ -39,17 +39,12 @@ class Driver(object):
     meta = dict()
     __fresh__ = True
 
-    def __init__(self, options=None, restrictions=None, to_log="", proxy_port=None, profile=None,
-                 executable_path=None, bins_path=None, name="cstmdr", n=15, user_agent_string=None):
+    def __init__(self, executable_path, bins_path, options=None, restrictions=None, to_log="", proxy_port=None, profile=None,
+                 name="cstmdr", n=15, user_agent_string="custombot"):
         """Initiate a Driver class object. """
         self.name = name
         self.n = n
-        self.user_agent_string = "custombot" if user_agent_string is None \
-            else user_agent_string
-        if executable_path is None:
-            executable_path = r"..\geckodriver.exe"  # Enter the path to the geckodriver executable
-        if bins_path is None:
-            bins_path = r"..\Firefox\firefox.exe"  # Enter the path to the Firefox browser executable
+        self.user_agent_string = user_agent_string
         if options is None:
             self.options = ["--headless"]
         else:
