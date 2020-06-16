@@ -10,7 +10,7 @@ from multiprocessing import Queue, Process, Manager  # module for multi-thread w
 from multiprocessing.queues import Empty  # multi-thread queue functionality
 from selenium.common.exceptions import WebDriverException  # module with WebDriver exception rules
 
-# Win10 fix za printanje v neklasišen stdout (recimo logfile)
+# Win10 fix for printing into a custom stdout (e.g. logfile)
 import win_unicode_console
 win_unicode_console.enable()
 
@@ -50,7 +50,7 @@ class Scraper(object):
             raise ValueError("Number of threads must be positive!")
         self.num_of_threads = num_of_threads
         self.to_save = scraping_aux.os_adapt(to_save)
-        self.to_log = scraping_aux.os_adapt(to_log)
+        self.to_log = scraping_aux.os_adapt(to_log) if driver is None or not driver.to_log else driver.to_log
         self.websites = [websites] if isinstance(websites, str) else (websites if isinstance(websites, list) else [])
         if not self.websites or not all([isinstance(page, str)for page in self.websites]):
             raise TypeError("Parameter \'websites\' is must be a list of strings")
@@ -87,7 +87,8 @@ class Scraper(object):
                 print("%s%s:\t%s" % ("\n"*n, datetime.now().strftime("%d.%m.%Y %H:%M:%S"), message), **kwargs)
                 sys.stdout = sys.__stdout__
 
-    def start(self, func, links=None, sleeptime=3, tries=0, num_of_threads=None, mp_func="_follow_links", **kwargs):
+    def start(self, func, links=None, sleeptime=3, tries=0, num_of_threads=None, mp_func="_follow_links",
+              webdriver_log="", **kwargs):
         """
         Starts the process of crawling-scraping with given function 'func'. If not specified by the 'links' parameter
         the Scraper.websites list is scraped.
@@ -98,11 +99,14 @@ class Scraper(object):
         :param num_of_threads: number of threads to be used for this work, cannot be higher than the Scraper number of
         threads
         :param mp_func: selection of the multiprocessing function. Defaults to _follow_links
+        :param webdriver_log: where should the webdriver's log be saved to a file. Defaults to the src/logs dir. If None
+        the log is not saved to a file but printed into the console.
         :param kwargs: additional key-word arguments.
         :return: 3 lists: a list of lists of characteristics of the items, a list of possible links to follow, and a
         list of unsuccessfull connection addresses.
         """
-        tries = tries if tries != 0 else (15 if mp_func == "_follow_links" else 3)
+        tries = tries if tries else (15 if mp_func == "_follow_links" else 3)
+        kwargs.update({"webdriver_log": webdriver_log})
         mp_func = getattr(Scraper, mp_func)
         links = self.websites if links is None else links
         links = [links] if isinstance(links, (str, tuple)) else links
@@ -110,8 +114,8 @@ class Scraper(object):
         if num_of_threads is None:
             num_of_threads = self.num_of_threads
         if num_of_threads > self.num_of_threads:
-            self.save_to_log("Number of specified threads is higher than the thread alotment of the Scraper. Number of "
-                             "threads used now equals the alotment number: %s" % self.num_of_threads)
+            self.save_to_log("Number of specified threads is higher than the thread allotment of the Scraper.\n"
+                             "Number of threads used now equals the allotment number: %s" % self.num_of_threads)
             num_of_threads = self.num_of_threads
         if num_of_threads < 1:
             raise ValueError("Number of threads must be positive!")
@@ -212,7 +216,8 @@ class Scraper(object):
             except Exception as e:
                 driver.save_to_log("\tCLOSING DRIVER %s DUE TO ERROR: " % driver.name +
                                    type(e).__name__ + ("\n\t" + str(e) if str(e) else "") + traceback.format_exc())
-                driver.driver.quit()
+                if kwargs.get("__debugmode__") is None or kwargs.get("__debugmode__") is False:
+                    driver.driver.quit()
                 raise e
             for new_link in next_page:
                 queue.put(new_link)
@@ -290,7 +295,8 @@ class Scraper(object):
             except Exception as e:
                 driver.save_to_log("\tCLOSING DRIVER %s DUE TO ERROR: " % driver.name
                                    + type(e).__name__ + ("\n\t" + str(e) if str(e) else "") + traceback.format_exc())
-                driver.driver.quit()
+                if kwargs.get("__debugmode__") is None or kwargs.get("__debugmode__") is False:
+                    driver.driver.quit()
                 raise e
             for new_link in next_page:
                 queue.put(new_link)
