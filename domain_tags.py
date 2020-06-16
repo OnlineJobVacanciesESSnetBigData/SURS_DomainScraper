@@ -1,7 +1,7 @@
 # Some helpful imports:
 
 from time import sleep
-from scraping_aux import send_buttons
+from scraping_aux import send_buttons, numbers_report
 from selenium.common.exceptions import WebDriverException, TimeoutException, ElementClickInterceptedException
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.common.by import By
@@ -80,16 +80,19 @@ def main():
     This file can be used as a script in terminal ba calling it with -m flag. It is executed with the below
     characteristics.
 
-    :return: three lists with results defined in the func_example definition
+    :return: three lists with results defined in the func_example definition; it also creates a file with 
+    some basic statistics
     """
     from custom_scraper import Scraper
-    shop = "shop_name"
+    shop_name = "shop_name"
     save_dir = "path/to/save/dir"
     log_dir = "path/to/log/dir"
 
     pages_to_scrape = ["A", "page", "or", "list", "of", "pages", "to", "scrape"]
-    shop_scraper = Scraper(shop, pages_to_scrape, to_log=log_dir,  to_save=save_dir)
-    return shop_scraper.start(func_example)
+    shop_scraper = Scraper(shop_name, pages_to_scrape, to_log=log_dir,  to_save=save_dir)
+    return1, return2, return3 = shop_scraper.start(func_example)
+    number_reports(return1, save_dir) 
+    return return1, return2, return3
 
 
 if __name__ == "__main__":
