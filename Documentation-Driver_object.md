@@ -31,9 +31,9 @@ All of the inputs but the two executables are optional and the default values ca
  * _options_: the default value initializes a headless (background) browser. A comprehensive list of other options can be found 
  [here](https://www.selenium.dev/selenium/docs/api/py/webdriver_firefox/selenium.webdriver.firefox.options.html); if we want a visible
  browser window, this can be set to an empty list `[]`.
- * restrictions: this parameter adds restriction pages that are not scraped. If left `None` the restrictions will be set by checking the 
- domain's Robots.txt document. If the user does not want to check restrictions (__*not recommended*__), they can set this to empty list
- `[]`.
+ * _restrictions_: this parameter adds restriction pages that are not scraped. If left `None` the restrictions will be set by checking
+ the domain's Robots.txt document. If the user does not want to check restrictions (__*not recommended*__), they can set this to empty
+ list `[]`.
  * _to_log_: path to the logfile that will be filled with the _Driver_'s work progress.
  * _proxy_port_: a list of five (key, value) couples, where keys are proxy port addresses and values are addresses' ports. If left 
  `None` a set of five `("", 0)` couples is used. The couples are used in order for the protocols:
