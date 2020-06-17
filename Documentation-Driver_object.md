@@ -94,5 +94,5 @@ extraction check [here](https://www.crummy.com/software/BeautifulSoup/bs4/doc/).
 _driver_ attribute. It can be used to click buttons, find webelements, wait for DOM changes much more. For more information on these 
 mechanics read [Python Selenium guides](https://selenium-python.readthedocs.io/).
 
-__*ONCE AGAIN*: it is recommended that every _driver_ instance is closed after use with the command `driver.driver.quit()` where
+__*ONCE AGAIN*: it is recommended that every _Driver.driver_ instance is closed after use with the command `driver.driver.quit()` where
 `driver` is the name of the _Driver_ object.__
