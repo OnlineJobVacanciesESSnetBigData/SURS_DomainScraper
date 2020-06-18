@@ -45,6 +45,7 @@ class Scraper(object):
         :param kwargs: additional key-word arguments
         """
         self.name = name
+        cl_driver = True
         if num_of_threads < 1:
             raise ValueError("Number of threads must be positive!")
         self.num_of_threads = num_of_threads
@@ -57,6 +58,8 @@ class Scraper(object):
             driver = Driver(name=self.name, options=options, restrictions=restrictions,
                             to_log=to_log, proxy_port=kwargs.get("proxy_port"), profile=kwargs.get("profile"),
                             executable_path=kwargs.get("executable_path"), bins_path=kwargs.get("bins_path"))
+        else:
+            cl_driver = False
         if not isinstance(driver, Driver):
             raise TypeError("Scraping driver must be object of type custom_driver.Driver")
         if self.websites and restrictions is None:
@@ -68,8 +71,9 @@ class Scraper(object):
             dr.name = self.name + "_cln%s" % n
             if dr.to_log:
                 dr.to_log += "%s" % n
-        driver.driver.quit()
-        del driver
+        if cl_driver:
+            driver.driver.quit()
+            del driver
 
     def save_to_log(self, message, n=0, **kwargs):
         """
