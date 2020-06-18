@@ -1,6 +1,6 @@
 # Technical documentation for Slovenian scraping robot - the _Driver_ object
 This document describes the module _custom_driver_, its main object _Driver_ and their mechanics in detail. The module runs in Python 
-version 3.5 or higher. The functions requires the following modules and methods to work:
+version 3.5 or higher. The object and methods require the following modules and methods to work:
  * BeautifulSoup (from module bs4) and HTML parser _lxml_,
  * webdriver (from module selenium),
  * Options (from module selenium.webdriver.firefox.options),
