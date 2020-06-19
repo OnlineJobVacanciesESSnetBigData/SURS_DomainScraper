@@ -43,18 +43,30 @@ individually by lowering the input `#` value.
 The scraping list itself is coded as a keyword argument with key `"input_duo"` in code of the scraping_function.
 
 ## Scraping function - type 1
-The scraping function of type one is called by the _Scraper.start_ method as the first parameter. 
+The type 1 scraping function is coded in the file with:
 ```
-Scraper.start(scraping_func, ...)  # "..." denotes optional parameters
+def scraping_func1(driver, **kwargs):
+    
+    output1, output2, links_to_scrape = [], [], []
+   
+    ...
+   
+    return output1, output2, [] if not links_to_scrape else links_to_scrape
 ```
-Each _Scraper_ process automatically 
-passes its _Driver_ object as the _driver_ parameter. As is better explained in the _Scraper_ documentation, a second __unnamed__ 
-argument that must be a list can also be passed to the _start_ method. The list should contain links for the _Scraper_ to load and 
-scrape. Any additional _kwargs_ arguments given to the _start_ method are then passed directly to the _scraping_func_ function as a 
-dictionary called _kwargs_.
+where `...` denotes custom-made code. \
+If new/unconnected links are to be added (again) to the scraping list, they must be put into the third output list (`links_to_scrape`).
+
+The functionis called by the _Scraper.start_ method as the first parameter. 
+```
+Scraper.start(scraping_func1, ...)  # "..." denotes optional parameters
+```
+Each _Scraper_ process automatically passes its _Driver_ object as the _driver_ parameter. As is better explained in the _Scraper_ 
+documentation, a second __unnamed__ argument that must be a list can also be passed to the _start_ method. The list should contain links
+for the _Scraper_ to load and scrape. Any additional _kwargs_ arguments given to the _start_ method are then passed directly to the 
+_scraping_func_ function as a dictionary called _kwargs_.
 
 Technically speaking, a standalone scraping process can be also run with this function on a _Driver_ object. Of course this process only
-scraped the currently loaded page. The standalone process is started by calling: \
+scraped the currently loaded page. The standalone process is started by calling:
 ```
 driver = Driver()
 driver.get("a page you want to scrape")
@@ -63,11 +75,30 @@ driver.driver.quit()  # You should always close a driver after use
 ```
 
 ## Scraping function - type 2
-The scraping function of type two is called by the _Scraper.start_ method as the first parameterm, a list of items for dynamic 
-interaction, and specification of the keyword argument `mp_func="follow_dests"`.
+The type 2 scraping function is coded in the file with:
+```
+def scraping_func2(driver, **kwargs):
+    
+    if kwargs.get("input_duo") is None:
+        raise KeyError("Parameter 'input_duo' is missing!")
+    item, nitem = kwargs.get("input_duo")
+
+    output1, output2, items_to_scrape = [], [], []
+   
+    ...
+   
+    return output1, output2, [] if not items_to_scrape else items_to_scrape
+```
+where `...` denotes custom-made code. \
+If new/unconnected links are to be added (again) to the scraping list, they must be put into the third output list (`links_to_scrape`).
+While raising the error is not absolutely essential when `input_duo` is missing in the input, we recommend that is left in the code to 
+remind users of the special format for the list of items.
+
+The function is called by the _Scraper.start_ method as the first parameter, a list of items for dynamic interaction, and specification
+of the keyword argument `mp_func="follow_dests"`.
 ```
 # "..." denotes optional parameters
-Scraper.start(scraping_func, [(item1, 0), (item2, 0), ], mp_func="follow_dests", ...)
+Scraper.start(scraping_func2, [(item1, 0), (item2, 0), ], mp_func="follow_dests", ...)
 ```
 Each _Scraper_ process automatically passes its _Driver_ object as the _driver_ parameter. It should be connected to the correct 
 interactive address. A second __unnamed__ argument *must* be a list is also passed and each process takes one element at a time. Lastly,
