@@ -75,19 +75,19 @@ class Scraper(object):
             driver.driver.quit()
             del driver
 
-    def save_to_log(self, message, n=0, **kwargs):
+    def save_to_log(self, message, nblanks=0, **kwargs):
         """
         Displays a message and saves it to the logfile if a logpath was given.
         :param message: the message to be displayed.
-        :param n: number of strating blank rows (for better readability in the logfile)
+        :param nblanks: number of strating blank rows (for better readability in the logfile)
         :param kwargs: additional key-word arguments.
         :return: a displayed message which might be stored in given logfile.
         """
-        print(u"%s%s" % ("\n"*n, message))
+        print(u"%s%s" % ("\n"*nblanks, message))
         if self.to_log:
             with open(self.to_log, "a", encoding="utf8") as logfile:
                 sys.stdout = logfile
-                print("%s%s:\t%s" % ("\n"*n, datetime.now().strftime("%d.%m.%Y %H:%M:%S"), message), **kwargs)
+                print("%s%s:\t%s" % ("\n"*nblanks, datetime.now().strftime("%d.%m.%Y %H:%M:%S"), message), **kwargs)
                 sys.stdout = sys.__stdout__
 
     def start(self, func, links=None, sleeptime=3, tries=0, num_of_threads=None, mp_func="_follow_links",
