@@ -66,11 +66,10 @@ not `None`, the robots will still be checked at every domain change.
 ## Methods
 Methods can be used with commands of shape `Scraper._method_`, where `_method_` is the desirable method. A _Scraper_ object has four 
 methods:
- * _save_to_log_(_message_, _nblank_=0, _kwargs_): print a log record with _message_ to the monitor and to the logfile if the _Driver_ 
+ * `save_to_log(message, nblank=0, **kwargs)`: print a log record with _message_ to the monitor and to the logfile if the _Driver_ 
  parameter _to_log_ is specified. The logfile will automatically include a timestamp. The parameter _nblank_ adds leading newlines. 
  Additional keyword arguments (_kwargs_) can be specified. The method uses the same _kwargs_ as the base Python function _print_.
- * _start_(_func_, _links_=`None`, _sleeptime_=3, _tries_=0, _num_of_threads_=`None`, _mp_func_="_follow_links", _webdriver_log_="",
- _kwargs_): the initiator of scraping on each _Driver_ object according to instructions stored in a function _func_ in the _domain_tag_ 
+ * `start(func, links=None, sleeptime=3, tries=0, num_of_threads=None, mp_func="_follow_links", webdriver_log="", **kwargs)`: the initiator of scraping on each _Driver_ object according to instructions stored in a function _func_ in the _domain_tag_ 
  file. At the end the outputs of the _Driver_ objects are merged. If specified the logfile and end result file are also created. 
    * The _Scraper_ will connect each child _Driver_ to a page from the _links_ list and scrape it, automatically adding further found
    links (if _func_ is construced so) to the list. If left `None`then the original _Scraper_'s _websites_ parameter is used.
@@ -85,14 +84,14 @@ methods:
    * The _webdriver_log_ and _kwargs_ parameters are _Driver_ parameters that are used by the children _Driver_ objects.\
     * **Note:** the _Driver_ children are always closed if scraping finished successfully. They can be reused again with the same 
     attributes and restrictions if a new _start_ method is called.
- * *_follow_links*: while technically a method, it should never be called by the user. This is the default programme that works in an 
+ * `_follow_links`: while technically a method, it should never be called by the user. This is the default programme that works in an 
  individual instance of a _Driver_ child to produce scraping of type 1. It's called (as a string) in the _Scraper.start_ method by the 
  parameter _mp_func_. It selects an unused URL address from the scraping list, feeds it to the _Driver_ and then executes the scraping 
  function (a _domain_tag_ function). Then the method collects the results of the scraping and adds them to the shared results 
  compilation. If a new relevant address is produced from scraping, then it's added to the list. This method keeps being called as long 
  as there are items in the list. After exhausting the list of items and if the _Driver_ child has been initialized by the _Scraper_ 
  object, this method automatically closes the _Driver.driver_ component. 
- * _follow_dests_: while technically a method, it should never be called explicitly by the user. This programme is used to execute 
+ * `follow_dests`: while technically a method, it should never be called explicitly by the user. This programme is used to execute 
  scraping of type 2. It's called (as a string) in the _Scraper.start_ method by the parameter _mp_func_. It starts a _Driver_ child 
  object, connects it to the first _Scraper.websites_ URL address and then selects an unused item from the scraping list and feeds it to 
  the _Driver_ according to the instructions in the scraping function (a _domain_tag_ function). Then the method collects the results of 
