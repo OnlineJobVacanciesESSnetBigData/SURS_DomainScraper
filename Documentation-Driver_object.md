@@ -61,10 +61,10 @@ Additionally, some automatically set attributes are also available after initial
 ## Methods
 Methods can be used with commands of shape `Driver._method_`, where `_method_` is the desirable method. A _Driver_ object has nine 
 methods:
- * _save_to_log_(_message_, _nblank_=0, _kwargs_): print a log record with _message_ to the monitor and to the logfile if the _Driver_ 
+ * `save_to_log(message, nblank=0, kwargs)`: print a log record with _message_ to the monitor and to the logfile if the _Driver_ 
  parameter _to_log_ is specified. The logfile will automatically include a timestamp. The parameter _nblank_ adds leading newlines. 
  Additional keyword arguments (_kwargs_) can be specified. The method uses the same _kwargs_ as the base Python function _print_.
- * _get_(_link_=`None`, _n_=`None`, _webdriver_log_="", _timeout_=`None`, _th_=""): connect to the address _link_ with the _Driver_
+ * `get(link=None, n=None, webdriver_log="", timeout=None, th="")`: connect to the address _link_ with the _Driver_
  object. At first use the preferences for user agent string, proxy ports, Firefox profile and Firefox options are set, including the
  timeout interval with parameter _timeout_. This method updates most of the _Driver_ object's attributes with every use. If the 
  _Driver_'s _restrictions_ are `None` or non-empty, and the _domain_ attribute is different then the previous value, then a robots check
@@ -74,18 +74,18 @@ methods:
  saved.  
  __*VERY IMPORTANT*: it is recommended that every _driver_ instance is closed after use with the command `driver.driver.quit()` where
 `driver` is the name of the _Driver_ object.__
- * _resoup_(): updates the _Driver_'s _soup_ attribute.
- * _complete_link_(_link_=""): either returns the _current_link_ completed to full URL shape or, given the _link_ parameter, completes 
+ * `resoup()`: updates the _Driver_'s _soup_ attribute.
+ * `complete_link(link="")`: either returns the _current_link_ completed to full URL shape or, given the _link_ parameter, completes 
  the given string to the full URL shape. The full shape is _http(s)://ww<span>w.<span>domain/link_path_and_params_.
- * _is_alive_(): check if the _Driver_ object is functional.
- * _check_robots_(_agent_="*", _kwargs_): checks if the Robots.txt (or robots.txt) document restrict access to any pages on the domain 
+ * `is_alive()`: check if the _Driver_ object is functional.
+ * `check_robots(agent="*", **kwargs)`: checks if the Robots.txt (or robots.txt) document restrict access to any pages on the domain 
  to our agent __and__ any other agent specified in the _agent_ parameter. Additional keyword arguments can be specified: 
    * _n_ (with default value 2) limits the number of allowed connections to the document and
    * _th_ argument sets the name of the _Driver_ for the log in the robot checking process.
- * _robots_deny_(_link_=`None`): return restrictions relevant for the _Driver_' current page, otherwise returns `False`. If _link_ then
+ * `robots_deny(link=None)`: return restrictions relevant for the _Driver_' current page, otherwise returns `False`. If _link_ then
  its address is used for relevance.
- * _export_Driver_(): creates a copy of the _Driver_ object with the same attributes and a non-active _driver_.
- * _add_to_meta(_values_, _keywords_=`None`): adds items to the _meta_ dictionary. If only _values_ is defined and it's a dictionary or 
+ * `export_Driver()`: creates a copy of the _Driver_ object with the same attributes and a non-active _driver_.
+ * `add_to_meta(values, keywords=None)`: adds items to the _meta_ dictionary. If only _values_ is defined and it's a dictionary or 
  couple, then the first value is used as keyword and the second as the value to be changed/added to the _meta_. If it's a list, then 
  default keywords `item#` where the `#` represents the number of items are used to update/expand the dictionary.
  
