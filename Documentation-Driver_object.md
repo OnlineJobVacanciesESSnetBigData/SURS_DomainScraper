@@ -61,7 +61,7 @@ Additionally, some automatically set attributes are also available after initial
 ## Methods
 Methods can be used with commands of shape `Driver._method_`, where `_method_` is the desirable method. A _Driver_ object has nine 
 methods:
- * `save_to_log(message, nblank=0, kwargs)`: print a log record with _message_ to the monitor and to the logfile if the _Driver_ 
+ * `save_to_log(message, nblank=0, **kwargs)`: print a log record with _message_ to the monitor and to the logfile if the _Driver_ 
  parameter _to_log_ is specified. The logfile will automatically include a timestamp. The parameter _nblank_ adds leading newlines. 
  Additional keyword arguments (_kwargs_) can be specified. The method uses the same _kwargs_ as the base Python function _print_.
  * `get(link=None, n=None, webdriver_log="", timeout=None, th="")`: connect to the address _link_ with the _Driver_
