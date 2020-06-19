@@ -1,5 +1,5 @@
-# scraping_JobPortals
-Programs and documentation regarding scraping of Job Portals. This project runs in Python 3.4 or more. It is **not** supported in Python 2.7. It also uses a *selenium* simulation browser. Without it, the project will not run correctly. 
+# SURS_DomainScraper
+General programmes and documentation for scraping of an individual domain and its subpages. This project runs in Python 3.5 or more. It is **not** supported in Python 2.7. It also uses a *selenium* simulation browser. Without it, the project will not run correctly. 
 
 In our case this is a Mozilla Firefox browser which additionally needs a geckodriver executable. **It is recommended that you use a browser of version 72.0.2 (Firefox Quantum) and a geckodriver version 0.26.0**
 
